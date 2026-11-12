@@ -17,3 +17,6 @@ browser_*.mp3
 .vscode/
 .idea/
 .DS_Store
+
+# Cloudflare
+.wrangler/
