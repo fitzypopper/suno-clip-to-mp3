@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suno Clip &rarr; MP3</title>
+<meta name="description" content="Convert Suno clips to MP3 entirely in your browser.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%B5</text></svg>">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Suno Clip <span class="arrow">&rarr;</span> MP3</h1>
+    <p class="lede">Paste a Suno link. Everything happens in your browser — the
+      file never leaves your machine, and no download is charged to your plan.</p>
+  </header>
+
+  <section id="banner" class="card warn hidden">
+    <h2>Run this locally</h2>
+    <p>Suno's license server only allows browser requests from
+      <code>suno.com</code> and from <code>http://localhost</code>. Serve this
+      page from your own machine and it works — no server, no account.</p>
+    <pre id="banner-cmd" class="cmd"></pre>
+    <p class="hint">Then open <code>http://localhost:8000</code>.</p>
+  </section>
+
+  <section class="card">
+    <label class="lbl" for="url">Suno link</label>
+    <div class="row">
+      <input id="url" type="text" spellcheck="false" autocomplete="off"
+             placeholder="https://suno.com/s/&lt;share id&gt;">
+      <button id="go" class="primary">Convert</button>
+    </div>
+    <p class="hint">Accepts CloudFront clip URLs, <code>suno.com/song/&lt;uuid&gt;</code>
+      and share links.</p>
+  </section>
+
+  <section id="progress" class="card hidden">
+    <div class="stage"><span id="stage-name">Starting…</span><span id="stage-pct"></span></div>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <pre id="log" class="log"></pre>
+  </section>
+
+  <section id="result" class="card hidden">
+    <h2>Done</h2>
+    <audio id="player" controls></audio>
+    <div class="meta" id="meta"></div>
+    <a id="dl" class="primary big" download>Download MP3</a>
+  </section>
+
+  <section id="error" class="card hidden err">
+    <h2>Something went wrong</h2>
+    <pre id="errmsg"></pre>
+  </section>
+
+  <footer>
+    <p>The content key is fetched from Suno's own license server and used only
+      locally. This is the same path the web player's own playback uses — no
+      downloads are charged against your plan.</p>
+  </footer>
+
+</div>
+
+<script src="lame.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

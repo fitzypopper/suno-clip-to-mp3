@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local artefacts produced by the tools
+*.source
+*.source.*
+*.mp3
+*.m4a
+*.aac
+out_*.mp3
+browser_*.mp3
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
