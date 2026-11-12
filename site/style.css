@@ -221,6 +221,11 @@ audio {
   user-select: all;
 }
 
+.status { font-weight: 600; }
+.status.ok { color: var(--ok); }
+.status.bad { color: var(--err); }
+.status.warn { color: var(--yell); }
+
 footer {
   margin-top: 28px;
   color: var(--muted);

@@ -17,15 +17,6 @@
       file never leaves your machine, and no download is charged to your plan.</p>
   </header>
 
-  <section id="banner" class="card warn hidden">
-    <h2>Run this locally</h2>
-    <p>Suno's license server only allows browser requests from
-      <code>suno.com</code> and from <code>http://localhost</code>. Serve this
-      page from your own machine and it works — no server, no account.</p>
-    <pre id="banner-cmd" class="cmd"></pre>
-    <p class="hint">Then open <code>http://localhost:8000</code>.</p>
-  </section>
-
   <section class="card">
     <label class="lbl" for="url">Suno link</label>
     <div class="row">
@@ -35,6 +26,7 @@
     </div>
     <p class="hint">Accepts CloudFront clip URLs, <code>suno.com/song/&lt;uuid&gt;</code>
       and share links.</p>
+    <p class="hint">Relay: <span id="status" class="status">checking…</span></p>
   </section>
 
   <section id="progress" class="card hidden">

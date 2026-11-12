@@ -2,14 +2,24 @@
 (() => {
   "use strict";
 
+  /*
+   * Suno's license server only sends CORS headers to suno.com, www.suno.com
+   * and http://localhost:<port>. A page served from GitHub Pages therefore
+   * cannot call it directly, so a small Cloudflare Worker relays the two
+   * calls that need it. The Worker URL is baked in at deploy time; visitors
+   * never have to configure anything.
+   *
+   * Set PROXY to "" to talk to Suno directly (only works on localhost).
+   */
+  const PROXY = "https://suno-rights-proxy.siggeemilandersson.workers.dev";
+
   const SUNO_API = "https://studio-api.prod.suno.com";
   const UUID_RE =
     /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
   const $ = (id) => document.getElementById(id);
   const els = {
-    url: $("url"), go: $("go"),
-    banner: $("banner"), bannerCmd: $("banner-cmd"),
+    url: $("url"), go: $("go"), status: $("status"),
     progress: $("progress"), stageName: $("stage-name"), stagePct: $("stage-pct"),
     barFill: $("bar-fill"), log: $("log"),
     result: $("result"), player: $("player"), meta: $("meta"), dl: $("dl"),
@@ -86,7 +96,9 @@
     if (m) {
       stage("Resolving share link…", 3);
       const data = await getJson(
-        `${SUNO_API}/api/share/code/${encodeURIComponent(m[1])}`
+        PROXY
+          ? `${PROXY}/share?share_id=${encodeURIComponent(m[1])}`
+          : `${SUNO_API}/api/share/code/${encodeURIComponent(m[1])}`
       );
       if (!data.content_id) throw new Error("That share link has no clip.");
       log(`share link → clip ${data.content_id}`, "ok");
@@ -120,18 +132,27 @@
 
   /* ------------------------------------------------------------- crypto -- */
 
-  /** Fetch the decryption rights for a clip from Suno's license server. */
+  /** Fetch the decryption rights for a clip. */
   async function fetchRights(clipId) {
     stage("Requesting content key…", 8);
-    const res = await fetch(`${SUNO_API}/api/mango/rights`, {
-      method: "POST",
-      credentials: "omit",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content_params: { content_id: clipId, content_type: "clip" },
-      }),
-    });
-    const rights = await res.json().catch(() => null);
+    let res, rights;
+    if (PROXY) {
+      res = await fetch(`${PROXY}/rights?clip_id=${encodeURIComponent(clipId)}`, {
+        credentials: "omit",
+      });
+      rights = await res.json().catch(() => null);
+    } else {
+      // direct call - only reachable from http://localhost
+      res = await fetch(`${SUNO_API}/api/mango/rights`, {
+        method: "POST",
+        credentials: "omit",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content_params: { content_id: clipId, content_type: "clip" },
+        }),
+      });
+      rights = await res.json().catch(() => null);
+    }
     if (!res.ok) {
       throw new Error(
         `License server returned ${res.status}: ` +
@@ -340,22 +361,28 @@
 
   /* --------------------------------------------------------------- init -- */
 
-  // Suno's license server only allows CORS from suno.com and from
-  // http://localhost:<port>.  Note that 127.0.0.1 is NOT on that list, so
-  // the page has to be reached as "localhost".  This page is served from
-  // GitHub Pages; the client runs it locally.
-  const isLocal = ["localhost", "::1", ""].includes(location.hostname);
-  if (!isLocal) {
-    show(els.banner, true);
-    let repo = new URL(".", location.href).href.replace(/\/site\/$/, "");
-    repo = repo.replace(/^https?:\/\/([^.]+)\.github\.io\//, "https://github.com/$1/");
-    els.bannerCmd.textContent =
-      `git clone ${repo}\n` +
-      `cd repo/site && python3 -m http.server 8000`;
+  async function probe() {
+    if (!PROXY) {
+      els.status.textContent = "direct (localhost only)";
+      els.status.className = "status warn";
+      return;
+    }
+    els.status.textContent = "checking relay…";
+    try {
+      const res = await fetch(`${PROXY}/health`, { credentials: "omit" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      els.status.textContent = "relay online";
+      els.status.className = "status ok";
+    } catch (e) {
+      els.status.textContent = "relay unreachable";
+      els.status.className = "status bad";
+    }
   }
 
   els.go.addEventListener("click", run);
   els.url.addEventListener("keydown", (e) => {
     if (e.key === "Enter") run();
   });
+
+  probe();
 })();
