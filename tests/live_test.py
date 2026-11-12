@@ -46,6 +46,15 @@ def main() -> int:
             print(f"\n  --- case: {name} ---")
             page.goto(LIVE, wait_until="load")
 
+            # the relay probe runs on load; wait for it to settle
+            try:
+                page.wait_for_function(
+                    "() => !document.getElementById('status').textContent"
+                    ".includes('checking')",
+                    timeout=20_000,
+                )
+            except Exception:
+                pass
             status = page.inner_text("#status")
             print(f"  relay status : {status}")
             if "online" not in status:

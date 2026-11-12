@@ -5,7 +5,7 @@ Two front ends for the same job:
 | | what it is |
 |---|---|
 | `suno_clip_to_mp3.py` | CLI. Downloads, does byte-level forensics, repairs broken containers, decrypts the streaming master, converts to MP3. |
-| `site/` | Static GitHub Pages app. Same crypto, entirely in the browser, no backend and no Worker - see `site/README.md`. |
+| `site/` | Static GitHub Pages app, live at <https://fitzypopper.dpdns.org/suno-clip-to-mp3/>. Same crypto, entirely in the browser, with a small Cloudflare Worker as a CORS relay. See `site/README.md`. |
 
 ## The link under investigation
 
@@ -123,7 +123,7 @@ This route is kept in the script as a **fallback only**, and the script
 prints a warning when it falls back to it, because it spends one of the
 plan's downloads.
 
-## CORS: why the browser app has to run on localhost
+## CORS: why the site needs a Worker
 
 Suno's license server only allows a handful of origins:
 
@@ -135,10 +135,10 @@ Suno's license server only allows a handful of origins:
 | `http://127.0.0.1:<port>` | no |
 
 So a page hosted on GitHub Pages cannot call the license endpoint, and
-`127.0.0.1` does not work either - it has to be `localhost`. The static app
-is therefore served from the visitor's own machine, where the origin is
-`http://localhost:8000` and CORS allows everything. GitHub Pages only hosts
-the files. This is also why no Cloudflare Worker is needed any more.
+`suno.com` pages send no CORS headers either - link resolution has to happen
+server side too. A ~40 line Cloudflare Worker relays the three calls that
+need it. The Worker URL is baked into the app, so **visitors configure
+nothing**: the site works straight from the browser.
 
 The media itself never needed a proxy: the CDN sends
 `access-control-allow-origin: *`.
@@ -181,6 +181,10 @@ The media itself never needed a proxy: the CDN sends
 `python3 tests/browser_test.py` - 3/3 green. Drives real Chromium through all
 three link types (CloudFront URL, song page, share link), pulls the produced
 blob back out of the page and verifies it with `ffprobe`.
+
+`python3 tests/live_test.py` - 3/3 green. The same flow against the
+**deployed** site, which is the test that proves visitors need no
+installation.
 
 ## Bugs found and fixed while building this
 
