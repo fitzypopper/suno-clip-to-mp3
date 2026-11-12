@@ -86,6 +86,27 @@ export default {
       });
     }
 
+    // Relay the clip metadata - it carries the authoritative media URL.
+    if (url.pathname === "/clip") {
+      const clipId = (url.searchParams.get("clip_id") || "").trim();
+      if (!UUID_RE.test(clipId)) {
+        return json({ error: "clip_id must be a uuid" }, 400);
+      }
+      let upstream;
+      try {
+        upstream = await fetch(`${SUNO_API}/api/clip/${clipId}`, {
+          headers: { Accept: "application/json", Referer: "https://suno.com/" },
+        });
+      } catch (e) {
+        return json({ error: `upstream unreachable: ${e.message}` }, 502);
+      }
+      const body = await upstream.text();
+      return new Response(body, {
+        status: upstream.status,
+        headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "no-store" },
+      });
+    }
+
     // Resolve a short share id (suno.com/s/<id>) to its clip id.
     if (url.pathname === "/share") {
       const shareId = (url.searchParams.get("share_id") || "").trim();

@@ -119,7 +119,11 @@
 
   /** Clip metadata: the authoritative CDN media URL plus the title. */
   async function fetchClipMeta(clipId) {
-    const data = await getJson(`${SUNO_API}/api/clip/${clipId}`);
+    const data = await getJson(
+      PROXY
+        ? `${PROXY}/clip?clip_id=${encodeURIComponent(clipId)}`
+        : `${SUNO_API}/api/clip/${clipId}`
+    );
     const url =
       (data.media_urls && data.media_urls[0] && data.media_urls[0].url) ||
       data.audio_url ||
